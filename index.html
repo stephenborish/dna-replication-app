@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DNA Replication Builder</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: clamp(24px, 5vw, 32px);
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            font-size: clamp(14px, 3vw, 16px);
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .instruction-panel {
+            background: #f0f4ff;
+            border-left: 5px solid #667eea;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            min-height: 80px;
+        }
+
+        .instruction-panel h2 {
+            color: #667eea;
+            font-size: clamp(16px, 4vw, 20px);
+            margin-bottom: 10px;
+        }
+
+        .instruction-panel p {
+            color: #555;
+            line-height: 1.6;
+            font-size: clamp(14px, 3vw, 16px);
+        }
+
+        .dna-workspace {
+            background: #fafafa;
+            border-radius: 15px;
+            padding: 30px;
+            margin: 25px 0;
+            min-height: 400px;
+            position: relative;
+            border: 2px dashed #ddd;
+        }
+
+        .dna-container {
+            position: relative;
+            width: 100%;
+            height: 350px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .dna-helix {
+            position: relative;
+            width: 80%;
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .strand {
+            position: absolute;
+            height: 8px;
+            background: linear-gradient(90deg, #888 0%, #666 100%);
+            border-radius: 4px;
+            transition: all 0.5s ease;
+        }
+
+        .strand.top {
+            top: 80px;
+            left: 10%;
+            right: 10%;
+        }
+
+        .strand.bottom {
+            bottom: 80px;
+            left: 10%;
+            right: 10%;
+        }
+
+        .strand.separated-top {
+            top: 30px;
+        }
+
+        .strand.separated-bottom {
+            bottom: 30px;
+        }
+
+        .strand-label {
+            position: absolute;
+            font-weight: bold;
+            font-size: 14px;
+            color: #667eea;
+        }
+
+        .origin-marker {
+            position: absolute;
+            left: 15%;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 40px;
+            height: 40px;
+            border: 3px dashed #ffa500;
+            border-radius: 50%;
+            background: rgba(255, 165, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            color: #ffa500;
+        }
+
+        .primer {
+            position: absolute;
+            height: 6px;
+            background: #ff6b9d;
+            border-radius: 3px;
+            box-shadow: 0 2px 5px rgba(255, 107, 157, 0.4);
+        }
+
+        .new-dna {
+            position: absolute;
+            height: 6px;
+            background: #8b5cf6;
+            border-radius: 3px;
+            box-shadow: 0 2px 5px rgba(139, 92, 246, 0.4);
+        }
+
+        .enzyme-toolbox {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin: 25px 0;
+        }
+
+        .enzyme {
+            background: white;
+            border: 3px solid #667eea;
+            border-radius: 15px;
+            padding: 15px;
+            text-align: center;
+            cursor: grab;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .enzyme:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .enzyme.dragging {
+            opacity: 0.5;
+            cursor: grabbing;
+        }
+
+        .enzyme.used {
+            opacity: 0.4;
+            cursor: not-allowed;
+            border-color: #ccc;
+        }
+
+        .enzyme-icon {
+            font-size: 40px;
+            margin-bottom: 8px;
+        }
+
+        .enzyme-name {
+            font-weight: bold;
+            color: #667eea;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .enzyme-desc {
+            font-size: 11px;
+            color: #777;
+        }
+
+        .feedback {
+            background: #d4edda;
+            border-left: 5px solid #28a745;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            display: none;
+        }
+
+        .feedback.show {
+            display: block;
+            animation: slideIn 0.5s ease;
+        }
+
+        .feedback p {
+            color: #155724;
+            font-size: clamp(13px, 3vw, 15px);
+            line-height: 1.6;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 25px;
+        }
+
+        button {
+            padding: 12px 30px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn-reset {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-reset:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        .legend {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .legend-color {
+            width: 30px;
+            height: 12px;
+            border-radius: 6px;
+        }
+
+        .legend-text {
+            font-size: 13px;
+            color: #555;
+        }
+
+        .completion-message {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            display: none;
+            margin-top: 20px;
+        }
+
+        .completion-message.show {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .completion-message h2 {
+            font-size: clamp(20px, 5vw, 28px);
+            margin-bottom: 15px;
+        }
+
+        .completion-message p {
+            font-size: clamp(14px, 3vw, 16px);
+            line-height: 1.8;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                padding: 20px;
+            }
+
+            .dna-workspace {
+                padding: 20px;
+            }
+
+            .enzyme-toolbox {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .replication-fork {
+            position: absolute;
+            width: 2px;
+            height: 120px;
+            background: #ffa500;
+            left: 25%;
+            top: 50%;
+            transform: translateY(-50%);
+            display: none;
+        }
+
+        .replication-fork.show {
+            display: block;
+        }
+
+        .enzyme-working {
+            position: absolute;
+            font-size: 35px;
+            z-index: 10;
+            animation: working 1s ease;
+        }
+
+        @keyframes working {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+
+        .final-molecules {
+            display: none;
+            flex-direction: column;
+            gap: 40px;
+            padding: 20px;
+        }
+
+        .final-molecules.show {
+            display: flex;
+        }
+
+        .molecule {
+            position: relative;
+            height: 60px;
+        }
+
+        .molecule-strand {
+            position: absolute;
+            left: 10%;
+            right: 10%;
+            height: 6px;
+            border-radius: 3px;
+        }
+
+        .molecule-strand.original {
+            background: #888;
+            top: 20px;
+        }
+
+        .molecule-strand.new {
+            background: #8b5cf6;
+            bottom: 20px;
+        }
+
+        .molecule-label {
+            position: absolute;
+            right: 5%;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 12px;
+            font-weight: bold;
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧬 DNA Replication Builder</h1>
+            <p>Guide enzymes to replicate DNA and learn how cells copy genetic information</p>
+        </div>
+
+        <div class="content">
+            <div class="instruction-panel" id="instructions">
+                <h2>Welcome!</h2>
+                <p>Your goal is to create two new DNA molecules from this original one. Let's begin by unzipping the DNA!</p>
+            </div>
+
+            <div class="dna-workspace" id="workspace">
+                <div class="dna-container" id="dnaContainer">
+                    <div class="origin-marker" id="origin">Origin</div>
+                    <div class="dna-helix" id="dnaHelix">
+                        <div class="strand top" id="topStrand"></div>
+                        <div class="strand bottom" id="bottomStrand"></div>
+                        <div class="replication-fork" id="fork"></div>
+                    </div>
+                    <div class="final-molecules" id="finalMolecules">
+                        <div class="molecule">
+                            <div class="molecule-strand original"></div>
+                            <div class="molecule-strand new"></div>
+                            <div class="molecule-label">Molecule 1<br>Semi-conservative</div>
+                        </div>
+                        <div class="molecule">
+                            <div class="molecule-strand original"></div>
+                            <div class="molecule-strand new"></div>
+                            <div class="molecule-label">Molecule 2<br>Semi-conservative</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="enzyme-toolbox" id="toolbox">
+                <div class="enzyme" draggable="true" data-enzyme="helicase">
+                    <div class="enzyme-icon">🔓</div>
+                    <div class="enzyme-name">Helicase</div>
+                    <div class="enzyme-desc">The Unzipper</div>
+                </div>
+                <div class="enzyme" draggable="true" data-enzyme="primase">
+                    <div class="enzyme-icon">🚩</div>
+                    <div class="enzyme-name">Primase</div>
+                    <div class="enzyme-desc">The Flag Waver</div>
+                </div>
+                <div class="enzyme" draggable="true" data-enzyme="polymerase">
+                    <div class="enzyme-icon">👷</div>
+                    <div class="enzyme-name">DNA Polymerase</div>
+                    <div class="enzyme-desc">The Builder</div>
+                </div>
+                <div class="enzyme" draggable="true" data-enzyme="ligase">
+                    <div class="enzyme-icon">🔗</div>
+                    <div class="enzyme-name">Ligase</div>
+                    <div class="enzyme-desc">The Gluer</div>
+                </div>
+            </div>
+
+            <div class="feedback" id="feedback">
+                <p id="feedbackText"></p>
+            </div>
+
+            <div class="completion-message" id="completion">
+                <h2>🎉 Congratulations!</h2>
+                <p>You've successfully completed DNA replication! Notice how each of the two new DNA molecules is <strong>semi-conservative</strong>, containing one original (template) strand and one newly synthesized strand. This ensures accurate genetic inheritance!</p>
+            </div>
+
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #888;"></div>
+                    <span class="legend-text">Original Template Strands</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #ff6b9d;"></div>
+                    <span class="legend-text">RNA Primers</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #8b5cf6;"></div>
+                    <span class="legend-text">New DNA Strands</span>
+                </div>
+            </div>
+
+            <div class="controls">
+                <button class="btn-reset" onclick="resetSimulation()">↻ Reset Simulation</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game state
+        let currentStep = 0;
+        let primers = [];
+        let newDNASegments = [];
+        let polymeraseUsed = 0;
+
+        const steps = [
+            {
+                instruction: "Drag <strong>Helicase</strong> (the unzipping enzyme) to the 'Origin' point on the DNA to separate the two strands.",
+                enzyme: "helicase",
+                feedback: "Great! Helicase successfully unzipped the DNA by breaking the hydrogen bonds between the base pairs. Now we have two template strands ready for building!"
+            },
+            {
+                instruction: "Next, <strong>Primase</strong> (the initializer) needs to lay down short RNA primers. DNA Polymerase can't start building without a primer! Drag Primase to place primers on the template strands.",
+                enzyme: "primase",
+                feedback: "Excellent! Primase has laid down the RNA primers. Notice how multiple primers are needed on one strand? This is due to how DNA Polymerase builds!"
+            },
+            {
+                instruction: "Now it's time for <strong>DNA Polymerase</strong> (the builder) to add new DNA bases. Remember, DNA Polymerase can <em>only</em> build new strands in the <strong>5' to 3' direction</strong>! Drag DNA Polymerase to the primers.",
+                enzyme: "polymerase",
+                feedback: "Fantastic! DNA Polymerase has built the new strands. The 'Leading Strand' was built continuously, but the 'Lagging Strand' was built in shorter 'Okazaki fragments' because DNA Polymerase can only work in one direction!"
+            },
+            {
+                instruction: "Almost there! DNA Polymerase needs to replace the RNA primers with DNA, then <strong>Ligase</strong> (the gluer) will seal the gaps between the fragments. Drag Ligase over the gaps.",
+                enzyme: "ligase",
+                feedback: "Success! The RNA primers are gone, and Ligase has sealed all the fragments. You now have two complete new DNA molecules!"
+            }
+        ];
+
+        // Initialize
+        function init() {
+            updateInstructions();
+            setupDragAndDrop();
+        }
+
+        function updateInstructions() {
+            const instructionPanel = document.getElementById('instructions');
+            if (currentStep < steps.length) {
+                instructionPanel.innerHTML = `
+                    <h2>Step ${currentStep + 1} of ${steps.length}</h2>
+                    <p>${steps[currentStep].instruction}</p>
+                `;
+            }
+        }
+
+        function setupDragAndDrop() {
+            const enzymes = document.querySelectorAll('.enzyme');
+            const workspace = document.getElementById('workspace');
+
+            enzymes.forEach(enzyme => {
+                enzyme.addEventListener('dragstart', handleDragStart);
+                enzyme.addEventListener('dragend', handleDragEnd);
+            });
+
+            workspace.addEventListener('dragover', handleDragOver);
+            workspace.addEventListener('drop', handleDrop);
+
+            // Mobile touch support
+            enzymes.forEach(enzyme => {
+                enzyme.addEventListener('touchstart', handleTouchStart, {passive: false});
+                enzyme.addEventListener('touchmove', handleTouchMove, {passive: false});
+                enzyme.addEventListener('touchend', handleTouchEnd, {passive: false});
+            });
+        }
+
+        let draggedElement = null;
+        let touchClone = null;
+
+        function handleDragStart(e) {
+            draggedElement = e.target.closest('.enzyme');
+            draggedElement.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+        }
+
+        function handleDragEnd(e) {
+            if (draggedElement) {
+                draggedElement.classList.remove('dragging');
+            }
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            if (!draggedElement) return;
+
+            const enzymeType = draggedElement.getAttribute('data-enzyme');
+            processEnzyme(enzymeType);
+        }
+
+        // Touch handlers for mobile
+        function handleTouchStart(e) {
+            e.preventDefault();
+            draggedElement = e.target.closest('.enzyme');
+            
+            // Create visual feedback
+            touchClone = draggedElement.cloneNode(true);
+            touchClone.style.position = 'fixed';
+            touchClone.style.pointerEvents = 'none';
+            touchClone.style.opacity = '0.8';
+            touchClone.style.zIndex = '1000';
+            document.body.appendChild(touchClone);
+            
+            const touch = e.touches[0];
+            updateTouchClone(touch.clientX, touch.clientY);
+        }
+
+        function handleTouchMove(e) {
+            e.preventDefault();
+            if (!touchClone) return;
+            
+            const touch = e.touches[0];
+            updateTouchClone(touch.clientX, touch.clientY);
+        }
+
+        function updateTouchClone(x, y) {
+            if (touchClone) {
+                touchClone.style.left = (x - 60) + 'px';
+                touchClone.style.top = (y - 60) + 'px';
+            }
+        }
+
+        function handleTouchEnd(e) {
+            e.preventDefault();
+            
+            if (touchClone) {
+                touchClone.remove();
+                touchClone = null;
+            }
+
+            if (draggedElement) {
+                const touch = e.changedTouches[0];
+                const workspace = document.getElementById('workspace');
+                const rect = workspace.getBoundingClientRect();
+                
+                // Check if dropped in workspace
+                if (touch.clientX >= rect.left && touch.clientX <= rect.right &&
+                    touch.clientY >= rect.top && touch.clientY <= rect.bottom) {
+                    const enzymeType = draggedElement.getAttribute('data-enzyme');
+                    processEnzyme(enzymeType);
+                }
+                
+                draggedElement = null;
+            }
+        }
+
+        function processEnzyme(enzymeType) {
+            if (currentStep >= steps.length) return;
+            
+            const expectedEnzyme = steps[currentStep].enzyme;
+            
+            if (enzymeType !== expectedEnzyme) {
+                showFeedback("Not quite! Try using " + expectedEnzyme + " first.", false);
+                return;
+            }
+
+            // Execute the appropriate action
+            switch (enzymeType) {
+                case 'helicase':
+                    runHelicase();
+                    break;
+                case 'primase':
+                    runPrimase();
+                    break;
+                case 'polymerase':
+                    runPolymerase();
+                    break;
+                case 'ligase':
+                    runLigase();
+                    break;
+            }
+        }
+
+        function runHelicase() {
+            const topStrand = document.getElementById('topStrand');
+            const bottomStrand = document.getElementById('bottomStrand');
+            const fork = document.getElementById('fork');
+            const origin = document.getElementById('origin');
+
+            // Animate helicase
+            const helicase = document.createElement('div');
+            helicase.className = 'enzyme-working';
+            helicase.textContent = '🔓';
+            helicase.style.left = '15%';
+            helicase.style.top = '50%';
+            document.getElementById('dnaContainer').appendChild(helicase);
+
+            setTimeout(() => {
+                topStrand.classList.add('separated-top');
+                bottomStrand.classList.add('separated-bottom');
+                fork.classList.add('show');
+                origin.style.display = 'none';
+                
+                // Add labels
+                addStrandLabels();
+                
+                helicase.remove();
+                advanceStep();
+            }, 1000);
+        }
+
+        function addStrandLabels() {
+            const container = document.getElementById('dnaContainer');
+            
+            const topLabel3 = document.createElement('div');
+            topLabel3.className = 'strand-label';
+            topLabel3.textContent = "3'";
+            topLabel3.style.left = '8%';
+            topLabel3.style.top = '20px';
+            container.appendChild(topLabel3);
+
+            const topLabel5 = document.createElement('div');
+            topLabel5.className = 'strand-label';
+            topLabel5.textContent = "5'";
+            topLabel5.style.right = '8%';
+            topLabel5.style.top = '20px';
+            container.appendChild(topLabel5);
+
+            const bottomLabel5 = document.createElement('div');
+            bottomLabel5.className = 'strand-label';
+            bottomLabel5.textContent = "5'";
+            bottomLabel5.style.left = '8%';
+            bottomLabel5.style.bottom = '20px';
+            container.appendChild(bottomLabel5);
+
+            const bottomLabel3 = document.createElement('div');
+            bottomLabel3.className = 'strand-label';
+            bottomLabel3.textContent = "3'";
+            bottomLabel3.style.right = '8%';
+            bottomLabel3.style.bottom = '20px';
+            container.appendChild(bottomLabel3);
+        }
+
+        function runPrimase() {
+            const container = document.getElementById('dnaContainer');
+            
+            // Animate primase
+            const primase = document.createElement('div');
+            primase.className = 'enzyme-working';
+            primase.textContent = '🚩';
+            primase.style.left = '30%';
+            primase.style.top = '30%';
+            container.appendChild(primase);
+
+            setTimeout(() => {
+                // Leading strand: one primer
+                const leadingPrimer = document.createElement('div');
+                leadingPrimer.className = 'primer';
+                leadingPrimer.style.left = '28%';
+                leadingPrimer.style.bottom = '50px';
+                leadingPrimer.style.width = '40px';
+                container.appendChild(leadingPrimer);
+                primers.push(leadingPrimer);
+
+                // Lagging strand: multiple primers
+                const laggingPositions = ['30%', '45%', '60%', '75%'];
+                laggingPositions.forEach((pos, idx) => {
+                    setTimeout(() => {
+                        const laggingPrimer = document.createElement('div');
+                        laggingPrimer.className = 'primer';
+                        laggingPrimer.style.left = pos;
+                        laggingPrimer.style.top = '50px';
+                        laggingPrimer.style.width = '35px';
+                        container.appendChild(laggingPrimer);
+                        primers.push(laggingPrimer);
+                    }, idx * 200);
+                });
+
+                primase.remove();
+                setTimeout(() => advanceStep(), 1000);
+            }, 1000);
+        }
+
+        function runPolymerase() {
+            polymeraseUsed++;
+            const container = document.getElementById('dnaContainer');
+            
+            // Animate polymerase
+            const polymerase = document.createElement('div');
+            polymerase.className = 'enzyme-working';
+            polymerase.textContent = '👷';
+            polymerase.style.left = '35%';
+            polymerase.style.top = '50%';
+            container.appendChild(polymerase);
+
+            setTimeout(() => {
+                if (polymeraseUsed === 1) {
+                    // Build leading strand continuously
+                    const leadingDNA = document.createElement('div');
+                    leadingDNA.className = 'new-dna';
+                    leadingDNA.style.left = '28%';
+                    leadingDNA.style.bottom = '50px';
+                    leadingDNA.style.width = '0%';
+                    container.appendChild(leadingDNA);
+                    newDNASegments.push(leadingDNA);
+
+                    // Animate growth
+                    let width = 0;
+                    const growInterval = setInterval(() => {
+                        width += 2;
+                        leadingDNA.style.width = width + '%';
+                        if (width >= 62) {
+                            clearInterval(growInterval);
+                        }
+                    }, 30);
+
+                    // Add label
+                    setTimeout(() => {
+                        const label = document.createElement('div');
+                        label.style.position = 'absolute';
+                        label.style.left = '50%';
+                        label.style.bottom = '35px';
+                        label.style.fontSize = '12px';
+                        label.style.fontWeight = 'bold';
+                        label.style.color = '#8b5cf6';
+                        label.textContent = 'Leading Strand (continuous)';
+                        container.appendChild(label);
+                    }, 1000);
+                }
+
+                if (polymeraseUsed === 2) {
+                    // Build lagging strand fragments
+                    const laggingPositions = [{left: '30%', width: '12%'}, {left: '45%', width: '12%'}, {left: '60%', width: '12%'}, {left: '75%', width: '12%'}];
+                    
+                    laggingPositions.forEach((pos, idx) => {
+                        setTimeout(() => {
+                            const fragment = document.createElement('div');
+                            fragment.className = 'new-dna';
+                            fragment.style.left = pos.left;
+                            fragment.style.top = '50px';
+                            fragment.style.width = pos.width;
+                            container.appendChild(fragment);
+                            newDNASegments.push(fragment);
+                        }, idx * 300);
+                    });
+
+                    // Add label
+                    setTimeout(() => {
+                        const label = document.createElement('div');
+                        label.style.position = 'absolute';
+                        label.style.left = '50%';
+                        label.style.top = '35px';
+                        label.style.fontSize = '12px';
+                        label.style.fontWeight = 'bold';
+                        label.style.color = '#8b5cf6';
+                        label.textContent = 'Lagging Strand (Okazaki fragments)';
+                        container.appendChild(label);
+                    }, 1200);
+
+                    polymerase.remove();
+                    setTimeout(() => advanceStep(), 2000);
+                    return;
+                }
+
+                polymerase.remove();
+            }, 1000);
+        }
+
+        function runLigase() {
+            const container = document.getElementById('dnaContainer');
+            
+            // Animate ligase
+            const ligase = document.createElement('div');
+            ligase.className = 'enzyme-working';
+            ligase.textContent = '🔗';
+            ligase.style.left = '50%';
+            ligase.style.top = '30px';
+            container.appendChild(ligase);
+
+            setTimeout(() => {
+                // Remove primers (replace with DNA)
+                primers.forEach(primer => {
+                    primer.style.background = '#8b5cf6';
+                });
+
+                // Connect fragments visually
+                setTimeout(() => {
+                    ligase.remove();
+                    advanceStep();
+                    showCompletion();
+                }, 1000);
+            }, 1000);
+        }
+
+        function advanceStep() {
+            if (currentStep < steps.length) {
+                showFeedback(steps[currentStep].feedback, true);
+                currentStep++;
+                
+                if (currentStep < steps.length) {
+                    setTimeout(() => {
+                        updateInstructions();
+                        hideFeedback();
+                    }, 3000);
+                }
+            }
+        }
+
+        function showFeedback(message, isSuccess) {
+            const feedback = document.getElementById('feedback');
+            const feedbackText = document.getElementById('feedbackText');
+            
+            feedback.style.background = isSuccess ? '#d4edda' : '#f8d7da';
+            feedback.style.borderLeft = isSuccess ? '5px solid #28a745' : '5px solid #dc3545';
+            feedbackText.style.color = isSuccess ? '#155724' : '#721c24';
+            feedbackText.textContent = message;
+            
+            feedback.classList.add('show');
+        }
+
+        function hideFeedback() {
+            document.getElementById('feedback').classList.remove('show');
+        }
+
+        function showCompletion() {
+            // Hide original DNA
+            document.getElementById('dnaHelix').style.display = 'none';
+            
+            // Show final molecules
+            document.getElementById('finalMolecules').classList.add('show');
+            document.getElementById('completion').classList.add('show');
+        }
+
+        function resetSimulation() {
+            currentStep = 0;
+            polymeraseUsed = 0;
+            primers = [];
+            newDNASegments = [];
+            
+            // Clear workspace
+            const container = document.getElementById('dnaContainer');
+            const toRemove = container.querySelectorAll('.primer, .new-dna, .enzyme-working, .strand-label, div[style*="position: absolute"]');
+            toRemove.forEach(el => el.remove());
+            
+            // Reset strands
+            document.getElementById('topStrand').classList.remove('separated-top');
+            document.getElementById('bottomStrand').classList.remove('separated-bottom');
+            document.getElementById('fork').classList.remove('show');
+            document.getElementById('origin').style.display = 'flex';
+            document.getElementById('dnaHelix').style.display = 'flex';
+            
+            // Hide completion
+            document.getElementById('finalMolecules').classList.remove('show');
+            document.getElementById('completion').classList.remove('show');
+            
+            // Reset enzymes
+            document.querySelectorAll('.enzyme').forEach(enzyme => {
+                enzyme.classList.remove('used');
+                enzyme.draggable = true;
+            });
+            
+            hideFeedback();
+            updateInstructions();
+        }
+
+        // Initialize on load
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
